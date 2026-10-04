@@ -1,2 +1,2 @@
 data/raw
-*.txt
+!data/annotated/*.txt
