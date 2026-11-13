@@ -1,2 +1,30 @@
 data/raw
 !data/annotated/*.txt
+# Virtual Environments
+.venv/
+label_env/
+venv/
+env/
+
+# Model Çəkiləri və Checkpoints (100MB-dan böyük olduğu üçün GitHub qəbul etmir)
+ner_model_output/
+final_az_ner_model/
+tmp_trainer/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Böyük Xam Dataset Faylları (JSONL və Parquet)
+data/raw/*.parquet
+data/raw/*.jsonl
+*.parquet
+
+# Python Cache və Sistem Faylları
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.gradio/
+.DS_Store
+Thumbs.db

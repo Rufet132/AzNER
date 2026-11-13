@@ -1,0 +1,135 @@
+Hər üçünə ayrıca, dürüst və geniş cavab verirəm.
+
+---
+
+## 1. Data artırmaq, imbalance düzəltmək
+
+Sənin düşüncən düzgündür — amma bir şeyi dəqiqləşdirək.
+
+**İmbalance problemi nədir, nə deyildir:**
+
+LOC 168, PRODUCT 24 — bu, 7:1 nisbətidir. Model LOC üçün yaxşı, PRODUCT üçün zəif öyrənəcək. Bu pis deyil — bu, datanın əks etdirdiyi reallıqdır. Müdafiə xəbərlərində ölkə adları çox, məhsul adları azdır. Bu nəticəni müsahibəçiyə izahat edə bilmək — məhz README-NER1-in ən güclü cəhəti bu idi.
+
+**Nə etmək lazımdır:**
+
+İki istiqamət var. Sən ikincini seçməlisən.
+
+Birinci yol — hər şeyi balanslaşdır, sonra kodla. Bu, vaxt itkisidir. Mükəmməl data olmayacaq, amma kodlamaq gecikəcək.
+
+İkinci yol — bu gün kodlamağa başla, paralel olaraq data artır. Konkret hədəf: idman mövzusundan 40-50 cümlə əlavə et. İdman xəbərləri PER-i 3x artıracaq — futbolçu adları, tarixlər çox olur. `idman.biz` və ya `nida.az`-dan bir matç xəbəri götür, annotasiya et. Bu, həm PER-i, həm DATE-i artıracaq.
+
+**Overfitting haqqında dürüst cavab:**
+
+212 cümlə ilə overfitting olacaq. Bu, layihənin "uğursuzluğu" deyil — bu, sənin README-də yazacağın dürüst analiz olacaq. Mitigation üçün: validation loss-u izlə, early stopping qoy, küçük learning rate istifadə et. Nəticəni honest benchmark üzərindən qiymətləndir. Bu, README-NER1-in etdiyi şeydir — inflated metrics-i kəşf etdi, düzəltdi, dürüst yazdı.
+
+---
+
+## 2. Model seçimi, arxitektura, riyaziyyat
+
+**Niyə XLM-RoBERTa — rəqiblərlə müqayisə:**
+
+mBERT (2018): 104 dil, Wikipedia datasından, WordPiece tokenization, 110M parametr. Az resurslu dillər üçün orta keyfiyyət.
+
+XLM-RoBERTa-base (2019): 100 dil, CC-100 dataset-i — Wikipedia-dan 2.5 trilyon token daha çox, BPE tokenization, 278M parametr. Az resurslu dillər üçün ardıcıl olaraq mBERT-i keçir.
+
+Azərbaycan dili üçün niyə XLM-RoBERTa? Azərbaycan Wikipedia kiçikdir — mBERT bu dili az görmüşdür. CC-100 isə internet mətni olduğu üçün daha çox Azərbaycan mətni ehtiva edir. Müsahibəçi soruşanda bu izahat kifayətdir.
+
+**BERT arxitekturasını nə qədər bilməlisən:**
+
+Müsahibə üçün lazım olan dərinlik bunlardır:
+
+Encoder stack — BERT 12 transformer encoder layer-dən ibarətdir. Hər layer: self-attention → add & norm → feed-forward → add & norm.
+
+Multi-head attention — hər head fərqli relationship öyrənir, nəticələr concatenate edilib linear projection-dan keçir.
+
+MLM pretraining — 15% token mask-lanır, model həmin tokenləri proqnozlaşdırır. Bu, iki tərəfli konteksti öyrənməyə imkan verir — GPT-dən fərqli olaraq.
+
+Token classification head — BERT-in üzərinə bir linear layer əlavə olunur. Bu layer hər token üçün label sayı qədər çıxış verir. Softmax tətbiq edilir, ən yüksək ehtimallı label seçilir.
+
+**Riyaziyyat — nə qədər lazımdır:**
+
+Hamısını əzbərləməyə çalışma. Layihə zamanı lazım olanı öyrən.
+
+Mütləq lazım: Softmax funksiyası — niyə var, nə edir. Cross-entropy loss — token classification-da necə hesablanır. Dot product — attention score-un əsası.
+
+Faydalı: Gradient descent — model necə öyrənir. Adam optimizer — niyə vanilla SGD-dən yaxşıdır. Layer normalization — niyə training sabitləşdirir.
+
+Hələ lazım deyil: Backpropagation riyaziyyatı, Jacobian matrisləri, information theory.
+
+**Riyaziyyatı nə vaxt, hansı resurslarla öyrən:**
+
+İndi: 3Blue1Brown "Neural Networks" playlist — "But what is a neural network?" və "Gradient descent" videoları. Cəmi 40 dəqiqədir, vizual izahat verir.
+
+Layihə zamanı: kodda `cross_entropy_loss` gördükdə — o anda formula bax, başa düş. Kontekst olmadan riyaziyyat öyrənmək yadda qalmır.
+
+Sonra: Andrej Karpathy "makemore" seriyası — bu, riyaziyyatı kod içindən öyrədir.
+
+---
+
+## 3. Copy-paste, BIO formatı, NER haqqında nə bilmək lazımdır
+
+**Copy-paste haqqında dürüst cavab:**
+
+Kopyalamaq özü problem deyil. Problem — başa düşmədən kopyalamaqdır.
+
+Düzgün yanaşma belə olmalıdır: mənim kodumu oxu, hər sətri başa düş. Sonra faylı bağla. Boş fayl aç. Sıfırdan yaz. Mənim koduma bax yalnız yapışdığın yerdə. Sənin yazdığın kod məndənki ilə fərqli olacaq — dəyişən adları fərqli olacaq, bəzən quruluş fərqli olacaq. Bu yaxşıdır.
+
+Müsahibəçi `tokenize_and_align` funksiyasını soruşanda — sən onu özün yazmısansa, izahat edə biləcəksən. Kopyalamısansa, edə bilməyəcəksən. Bu, fərqi yaradan şeydir.
+
+**BIO formatı — tam izahat:**
+
+NER token-level classification tapşırığıdır. Hər token bir label alır. Problem: bəzi entity-lər çox tokendən ibarətdir. "Müdafiə Nazirliyi" iki sözdür — bunun bir entity olduğunu modelin başa düşməsi üçün BIO lazımdır.
+
+B = Beginning. Entity-nin ilk tokeni.
+I = Inside. Eyni entity-nin davamı.
+O = Outside. Heç bir entity deyil.
+
+```
+Müdafiə   → B-ORG    (entity başlayır)
+Nazirliyi → I-ORG    (eyni entity davam edir)
+bu        → O        (entity deyil)
+ilin      → O
+sentyabr  → B-DATE   (yeni entity başlayır)
+ayında    → I-DATE   (davam edir)
+```
+
+Niyə `B-` və `I-` ayrıdır? İki ORG entity ardıcıl gəlsə:
+
+```
+AZƏRTAC   → B-ORG
+AFFA      → B-ORG    (yeni entity — I-ORG deyil)
+```
+
+Əgər yalnız "ORG" olsaydı, model bu iki entity-nin ayrı olduğunu bilməzdi.
+
+**Subtoken problemi — ən vacib texniki məsələ:**
+
+XLM-RoBERTa "Əliyev" sözünü `["▁Əli", "yev"]` kimi böləcək. Bizim annotasiyanın yalnız bir labelı var: `B-PER`. İkinci subtoken `yev` üçün label yoxdur. Buna görə `-100` veririk — PyTorch loss-u `-100` olan tokenləri ignore edir.
+
+```python
+word_ids:     [None,  0,    0,     1,    2,    None]
+tokens:       [CLS,  ▁Əli, yev,  Bakı, da,   SEP]
+labels:       [-100, B-PER, -100, B-LOC, -100, -100]
+```
+
+`None` → `[CLS]`, `[SEP]` — ignore.
+Sözün ilk subtokeni → əsl label.
+Sözün sonrakı subtoken-ləri → `-100`, ignore.
+
+Bu mexanizmi müsahibəçi soruşacaq. "Label alignment nədir?" — cavabın bu olmalıdır.
+
+**NER haqqında nə bilmək lazımdır — sıra ilə:**
+
+Birinci: BIO formatı — yuxarıda izahat etdim. Başa düşdün.
+
+İkinci: Tokenization vs word boundary. Modelin tokenizasiyası ilə sənin sözlərin eyni deyil. Bu uçurum label alignment ilə körpülənir.
+
+Üçüncü: seqeval metrikası. Token-level accuracy yanıltıcıdır — əgər cümlənin 90% O-dursa, model heç bir entity tapmasa belə 90% accuracy alar. seqeval span-level F1 hesablayır — yalnız tam entity düzgün tapıldıqda sayılır. Bu fərqi bil.
+
+Dördüncü: per-label F1 analizi. Ümumi F1 yox, hər label üçün ayrıca. LOC F1=0.85, PRODUCT F1=0.41 — bu, datanın harada zəif olduğunu göstərir.
+
+---
+
+## Bu gün — nə etməlisən
+
+Saat neçədir, neçə saat vaxtın var? Yazsan, bu günün planını quraq. Bir şeyi bilirsən: bu gün kod yazılacaq. Data artırma paralel gedir — annotasiya etmək axşam işidir, coding isə gündüzün.
