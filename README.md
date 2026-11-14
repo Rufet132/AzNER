@@ -140,9 +140,3 @@ python app.py
 * **`Səngəçal`** $\rightarrow$ `LOC` *(Confidence: 98.21%)*
 * **`Qazi Marketdən`** $\rightarrow$ `LOC` *(Confidence: 95.16%)*
 * **`Asus Tuf F15`** $\rightarrow$ `PRODUCT` *(Confidence: 98.62%)*
-
----
-
-## 🔮 Future Improvements
-* **Morphological Lemmatization:** Integrate an Azerbaijani morphological analyzer post-NER to strip inflectional suffixes (e.g., normalizing `"Azərbaycanın"` $\rightarrow$ `"Azərbaycan"`) for downstream knowledge graph linking.
-* **Data Augmentation:** Expand training samples for nested parenthetical abbreviations (e.g., `"Türk Hava Yolları (THY)"`) and foreign geographical entities.
